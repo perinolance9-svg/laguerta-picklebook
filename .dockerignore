@@ -1,0 +1,11 @@
+.git
+.gitignore
+config/private.php
+database
+source_docs
+tmp
+PUBLIC_DEPLOYMENT.md
+Laguerta-Picklebook-*.zip
+assets/sample-gcash-receipt*.png
+uploads/payment-receipts/*
+!uploads/payment-receipts/.htaccess

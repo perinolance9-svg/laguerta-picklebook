@@ -3,6 +3,14 @@ declare(strict_types=1);
 require_once __DIR__ . '/config/bootstrap.php';
 
 $connection = Database::connect();
+$usersTable = $connection->query("SHOW TABLES LIKE 'users'")->fetchColumn();
+if (!$usersTable) {
+    $installer = file_get_contents(__DIR__ . '/INSTALL_DATABASE.sql');
+    if ($installer === false) throw new RuntimeException('The database installer is missing.');
+    foreach (array_filter(array_map('trim', explode(';', $installer))) as $query) {
+        $connection->exec($query);
+    }
+}
 $adminCount = (int) $connection->query("SELECT COUNT(*) FROM users WHERE role = 'Admin'")->fetchColumn();
 $error = null;
 

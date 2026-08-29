@@ -14,11 +14,11 @@ final class Database
 {
     public static function connect(): PDO
     {
-        $host = appSetting('DB_HOST', '127.0.0.1');
-        $port = appSetting('DB_PORT', '3306');
-        $name = appSetting('DB_NAME', 'pickle_book');
-        $user = appSetting('DB_USER', 'root');
-        $pass = appSetting('DB_PASS');
+        $host = appSetting('DB_HOST', appSetting('MYSQLHOST', '127.0.0.1'));
+        $port = appSetting('DB_PORT', appSetting('MYSQLPORT', '3306'));
+        $name = appSetting('DB_NAME', appSetting('MYSQLDATABASE', 'pickle_book'));
+        $user = appSetting('DB_USER', appSetting('MYSQLUSER', 'root'));
+        $pass = appSetting('DB_PASS', appSetting('MYSQLPASSWORD'));
         $dsn = sprintf(
             'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
             $host,

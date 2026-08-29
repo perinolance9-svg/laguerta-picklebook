@@ -1,6 +1,6 @@
 SET NAMES utf8mb4;
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     user_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
@@ -15,14 +15,14 @@ CREATE TABLE users (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE courts (
+CREATE TABLE IF NOT EXISTS courts (
     court_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     court_name VARCHAR(100) NOT NULL UNIQUE,
     location VARCHAR(100) NOT NULL,
     status ENUM('Available', 'Maintenance', 'Closed') NOT NULL DEFAULT 'Available'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE open_play (
+CREATE TABLE IF NOT EXISTS open_play (
     openplay_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     category VARCHAR(30) NOT NULL,
     play_date DATE NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE open_play (
     CONSTRAINT chk_open_play_capacity CHECK (max_players > 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE reservations (
+CREATE TABLE IF NOT EXISTS reservations (
     reservation_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     reservation_date DATE NOT NULL,
     start_time TIME NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE reservations (
     INDEX idx_reservation_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
     payment_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     amount DECIMAL(10,2) NOT NULL,
     payment_method VARCHAR(50) NOT NULL DEFAULT 'GCash',
@@ -66,7 +66,7 @@ CREATE TABLE payments (
     CONSTRAINT fk_payment_reservation FOREIGN KEY (reservation_id) REFERENCES reservations(reservation_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
     notification_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     message TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -74,7 +74,7 @@ CREATE TABLE notifications (
     CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE openplay_players (
+CREATE TABLE IF NOT EXISTS openplay_players (
     join_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNSIGNED NOT NULL,
     openplay_id INT UNSIGNED NOT NULL,
@@ -87,4 +87,5 @@ CREATE TABLE openplay_players (
 INSERT INTO courts (court_name, location, status) VALUES
 ('Court A', 'Campus Sports Center', 'Available'),
 ('Court B', 'Campus Sports Center', 'Available'),
-('Court C', 'Community Gym', 'Maintenance');
+('Court C', 'Community Gym', 'Maintenance')
+ON DUPLICATE KEY UPDATE location = VALUES(location);
