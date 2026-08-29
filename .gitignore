@@ -1,0 +1,10 @@
+/config/private.php
+/uploads/payment-receipts/*
+!/uploads/payment-receipts/.htaccess
+/database/
+/source_docs/
+/tmp/
+/PUBLIC_DEPLOYMENT.md
+/Laguerta-Picklebook-*.zip
+/assets/sample-gcash-receipt*.png
+*.log

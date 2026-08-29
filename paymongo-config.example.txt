@@ -1,0 +1,7 @@
+PAYMONGO_SECRET_KEY=sk_test_REPLACE_WITH_YOUR_TEST_SECRET
+PAYMONGO_WEBHOOK_SECRET=whsk_REPLACE_WITH_YOUR_TEST_WEBHOOK_SECRET
+PAYMONGO_MODE=test
+APP_BASE_URL=https://YOUR-PUBLIC-HTTPS-ADDRESS/lantoy2
+
+Do not rename this example to a publicly served secrets file. Configure these values as
+server environment variables. Never commit or share sk_live_ or whsk_ values.

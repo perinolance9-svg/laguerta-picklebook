@@ -1,0 +1,18 @@
+Options -Indexes
+DirectoryIndex index.php
+
+<FilesMatch "^(private\.php|private\.example\.php|.*\.(sql|log|ini|env))$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+php_value upload_max_filesize 6M
+php_value post_max_size 7M
+php_value session.cookie_httponly 1
+php_value session.cookie_samesite Lax
