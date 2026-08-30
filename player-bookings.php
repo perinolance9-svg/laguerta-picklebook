@@ -9,13 +9,14 @@ try {
     $userId = Auth::id();
     $now = new DateTimeImmutable('now', new DateTimeZone('Asia/Manila'));
     $service = new Reservation(Database::connect());
-    $rows = array_values(array_filter($service->getReservations(), static function(array $reservation) use ($now): bool {
+    $service->confirmPaidReservationsByUser($userId);
+    $rows = array_values(array_filter($service->getReservationsByUser($userId), static function(array $reservation) use ($now): bool {
         $end = new DateTimeImmutable($reservation['reservation_date'] . ' ' . $reservation['end_time'], new DateTimeZone('Asia/Manila'));
         return $reservation['status'] !== 'Cancelled' && $end > $now;
     }));
     $bookings = array_map(static function(array $row) use ($userId): array {
         $isOwn = (int)$row['user_id'] === $userId;
-        $paymentStatus = $isOwn ? (string)($row['payment_status'] ?? 'Not paid') : '';
+        $paymentStatus = (string)($row['payment_status'] ?? 'Not paid');
         return [
             'reservation_id' => (int)$row['reservation_id'],
             'day' => date('d', strtotime($row['reservation_date'])),

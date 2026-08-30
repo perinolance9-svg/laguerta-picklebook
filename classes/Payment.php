@@ -150,11 +150,11 @@ final class Payment
                     "UPDATE payments SET payment_status = 'Paid', paid_at = CURRENT_TIMESTAMP WHERE payment_id = :payment_id"
                 );
                 $update->execute(['payment_id' => $paymentId]);
-                $confirm = $this->connection->prepare(
-                    "UPDATE reservations SET status = 'Confirmed' WHERE reservation_id = :reservation_id AND status = 'Pending'"
-                );
-                $confirm->execute(['reservation_id' => $payment['reservation_id']]);
             }
+            $confirm = $this->connection->prepare(
+                "UPDATE reservations SET status = 'Confirmed' WHERE reservation_id = :reservation_id AND status = 'Pending'"
+            );
+            $confirm->execute(['reservation_id' => $payment['reservation_id']]);
             $this->connection->commit();
         } catch (Throwable $exception) {
             if ($this->connection->inTransaction()) $this->connection->rollBack();

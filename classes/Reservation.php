@@ -67,6 +67,20 @@ final class Reservation
         }
     }
 
+    public function confirmPaidReservationsByUser(int $userId): void
+    {
+        if ($userId < 1) return;
+        $statement = $this->connection->prepare(
+            "UPDATE reservations r
+             INNER JOIN payments p ON p.reservation_id = r.reservation_id
+             SET r.status = 'Confirmed'
+             WHERE r.user_id = :user_id
+               AND r.status = 'Pending'
+               AND p.payment_status = 'Paid'"
+        );
+        $statement->execute(['user_id'=>$userId]);
+    }
+
     public function getCourtAvailability(?DateTimeImmutable $moment = null): array
     {
         $moment ??= new DateTimeImmutable('now', new DateTimeZone('Asia/Manila'));
