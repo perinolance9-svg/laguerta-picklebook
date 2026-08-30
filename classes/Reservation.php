@@ -13,21 +13,28 @@ final class Reservation
     public function addReservation(array $data): int
     {
         $data = $this->validate($data);
-        $this->assertScheduleAvailable($data);
-        $this->assertPlayerBookingLimit($data['user_id']);
-
-        $sql = 'INSERT INTO reservations
-                    (reservation_date, start_time, end_time, status, user_id, court_id)
-                VALUES
-                    (:reservation_date, :start_time, :end_time, :status, :user_id, :court_id)';
-
+        $startedTransaction = !$this->connection->inTransaction();
         try {
+            if ($startedTransaction) $this->connection->beginTransaction();
+            $this->lockCourt((int)$data['court_id']);
+            $this->assertScheduleAvailable($data);
+            $this->assertPlayerBookingLimit($data['user_id']);
+            $sql = 'INSERT INTO reservations
+                        (reservation_date, start_time, end_time, status, user_id, court_id)
+                    VALUES
+                        (:reservation_date, :start_time, :end_time, :status, :user_id, :court_id)';
             $statement = $this->connection->prepare($sql);
             $statement->execute($data);
-            return (int) $this->connection->lastInsertId();
+            $id = (int)$this->connection->lastInsertId();
+            if ($startedTransaction) $this->connection->commit();
+            return $id;
         } catch (PDOException $exception) {
+            if ($startedTransaction && $this->connection->inTransaction()) $this->connection->rollBack();
             error_log($exception->getMessage());
             throw new RuntimeException('The reservation could not be added.');
+        } catch (Throwable $exception) {
+            if ($startedTransaction && $this->connection->inTransaction()) $this->connection->rollBack();
+            throw $exception;
         }
     }
 
@@ -137,24 +144,31 @@ final class Reservation
         }
 
         $data = $this->validate($data);
-        $this->assertScheduleAvailable($data, $id);
-        $data['reservation_id'] = $id;
-
-        $sql = 'UPDATE reservations
-                SET reservation_date = :reservation_date,
-                    start_time = :start_time,
-                    end_time = :end_time,
-                    status = :status,
-                    user_id = :user_id,
-                    court_id = :court_id
-                WHERE reservation_id = :reservation_id';
-
+        $startedTransaction = !$this->connection->inTransaction();
         try {
+            if ($startedTransaction) $this->connection->beginTransaction();
+            $this->lockCourt((int)$data['court_id']);
+            $this->assertScheduleAvailable($data, $id);
+            $data['reservation_id'] = $id;
+            $sql = 'UPDATE reservations
+                    SET reservation_date = :reservation_date,
+                        start_time = :start_time,
+                        end_time = :end_time,
+                        status = :status,
+                        user_id = :user_id,
+                        court_id = :court_id
+                    WHERE reservation_id = :reservation_id';
             $statement = $this->connection->prepare($sql);
-            return $statement->execute($data);
+            $updated = $statement->execute($data);
+            if ($startedTransaction) $this->connection->commit();
+            return $updated;
         } catch (PDOException $exception) {
+            if ($startedTransaction && $this->connection->inTransaction()) $this->connection->rollBack();
             error_log($exception->getMessage());
             throw new RuntimeException('The reservation could not be updated.');
+        } catch (Throwable $exception) {
+            if ($startedTransaction && $this->connection->inTransaction()) $this->connection->rollBack();
+            throw $exception;
         }
     }
 
@@ -298,6 +312,13 @@ final class Reservation
             error_log($exception->getMessage());
             throw new RuntimeException('Court availability could not be checked.');
         }
+    }
+
+    private function lockCourt(int $courtId): void
+    {
+        $statement = $this->connection->prepare('SELECT court_id FROM courts WHERE court_id = :court_id FOR UPDATE');
+        $statement->execute(['court_id'=>$courtId]);
+        if (!$statement->fetchColumn()) throw new InvalidArgumentException('Select a valid court.');
     }
 
     private function assertPlayerBookingLimit(int $userId): void

@@ -21,6 +21,7 @@ try {
             'day' => date('d', strtotime($row['reservation_date'])),
             'month' => date('M', strtotime($row['reservation_date'])),
             'court_name' => (string)$row['court_name'],
+            'player_name' => (string)$row['player_name'],
             'location' => (string)$row['location'],
             'time_label' => date('g:i A', strtotime($row['start_time'])) . '–' . date('g:i A', strtotime($row['end_time'])),
             'status' => (string)$row['status'],
