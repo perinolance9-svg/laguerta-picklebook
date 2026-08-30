@@ -269,6 +269,5 @@ $form = array_merge($defaults, $editing ?? []);
         </article>
     </section>
 </main>
-<script src="assets/auto-refresh.js"></script>
 </body>
 </html>
