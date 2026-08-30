@@ -2,11 +2,18 @@
 declare(strict_types=1);
 require_once __DIR__ . '/config/bootstrap.php';
 require_once __DIR__ . '/classes/Reservation.php';
-Auth::requireRole('Player');
+require_once __DIR__ . '/classes/PlayerStatusToken.php';
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 try {
-    $userId = Auth::id();
+    $statusToken = (string)($_SERVER['HTTP_X_PLAYER_STATUS_TOKEN'] ?? '');
+    $userId = PlayerStatusToken::verify($statusToken);
+    if ($userId < 1 && Auth::role() === 'Player') $userId = Auth::id();
+    if ($userId < 1) {
+        http_response_code(401);
+        echo json_encode(['error'=>'Player status authorization expired.']);
+        exit;
+    }
     $now = new DateTimeImmutable('now', new DateTimeZone('Asia/Manila'));
     $service = new Reservation(Database::connect());
     $service->confirmPaidReservationsByUser($userId);

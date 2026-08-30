@@ -2,10 +2,12 @@
 declare(strict_types=1);
 require_once __DIR__ . '/config/bootstrap.php';
 require_once __DIR__ . '/classes/Reservation.php';
+require_once __DIR__ . '/classes/PlayerStatusToken.php';
 Auth::requireRole('Player');
 function udEscape(string|int|null $value): string { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); }
 $error=null; $connection=Database::connect(); $service=new Reservation($connection);
 $userId=Auth::id();
+$playerStatusToken=PlayerStatusToken::issue($userId);
 try {
     $service->confirmPaidReservationsByUser($userId);
     if($_SERVER['REQUEST_METHOD']==='POST'){
@@ -46,7 +48,8 @@ function durationLabel(seconds){if(seconds===null||seconds===undefined)return ''
 function safe(value){return String(value).replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));}
 let refreshingBookings=false;
 function renderBookings(bookings){const cards=document.getElementById('booking-cards'),count=document.getElementById('booking-count');if(!cards||!count)return;count.textContent=`${bookings.length} bookings`;cards.innerHTML=bookings.length?bookings.map(b=>`<div class="booking-card"><div class="booking-date"><strong>${safe(b.day)}</strong><span>${safe(b.month)}</span></div><div><strong>${safe(b.court_name)}</strong><small>${safe(b.location)} · ${safe(b.time_label)}</small></div><div class="booking-state"><span class="status status-${safe(b.status.toLowerCase())}">${safe(b.status)}</span><small>${safe(b.payment_status)}</small>${b.can_pay?`<a class="pay-button" href="personal-gcash-payment.php?reservation_id=${encodeURIComponent(b.reservation_id)}">Pay now</a>`:''}</div></div>`).join(''):'<p class="empty">You have no current or upcoming reservations.</p>';}
-async function refreshBookings(){if(refreshingBookings)return;refreshingBookings=true;try{const response=await fetch(`player-bookings.php?t=${Date.now()}`,{cache:'no-store'});if(!response.ok)throw new Error();const data=await response.json();renderBookings(data.bookings);}catch(e){}finally{refreshingBookings=false;}}
+const playerStatusToken=<?=json_encode($playerStatusToken,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT)?>;
+async function refreshBookings(){if(refreshingBookings)return;refreshingBookings=true;try{const response=await fetch(`player-bookings.php?t=${Date.now()}`,{cache:'no-store',headers:{'X-Player-Status-Token':playerStatusToken}});if(!response.ok)throw new Error();const data=await response.json();renderBookings(data.bookings);}catch(e){}finally{refreshingBookings=false;}}
 let liveCourts=[];
 let refreshingCourts=false;
 function renderCourts(){const grid=document.getElementById('court-status-grid');grid.innerHTML=liveCourts.map(c=>{const occupied=c.availability==='occupied';const reserved=c.availability==='reserved';const vacant=c.availability==='vacant';let timer='';if(occupied)timer=`<strong>${durationLabel(c.remaining_seconds)} remaining</strong>`;else if(reserved)timer=`<strong>Starts in ${durationLabel(c.remaining_seconds)}</strong>`;else if(vacant)timer='<strong>Vacant now</strong>';return `<article class="court-live-card court-${safe(c.availability)}"><div class="court-live-icon">${vacant?'✓':occupied?'◷':reserved?'⌛':'!'}</div><div><small>${safe(c.location)}</small><h3>${safe(c.court_name)}</h3><span class="court-live-state">${safe(c.availability)}</span></div><div class="court-live-time">${timer}<small>${safe(c.message)}</small></div></article>`}).join('');}

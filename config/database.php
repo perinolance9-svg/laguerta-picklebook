@@ -51,6 +51,12 @@ final class AppConfig
     public static function personalGcashNumber(): string { return appSetting('PERSONAL_GCASH_NUMBER'); }
     public static function googleClientId(): string { return appSetting('GOOGLE_CLIENT_ID'); }
     public static function googleClientSecret(): string { return appSetting('GOOGLE_CLIENT_SECRET'); }
+    public static function playerStatusSecret(): string
+    {
+        $configured = appSetting('PLAYER_STATUS_SECRET');
+        if ($configured !== '') return $configured;
+        return hash('sha256', appSetting('MYSQLPASSWORD', appSetting('DB_PASS')) . '|' . self::baseUrl());
+    }
     public static function googleRedirectUri(): string
     {
         $configured = appSetting('GOOGLE_REDIRECT_URI');
